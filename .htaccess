@@ -1,0 +1,23 @@
+RewriteEngine On
+
+# 1. If the requested URL points to an actual existing file or directory, serve it and STOP.
+# This prevents Apache from entering an infinite redirect loop.
+RewriteCond %{REQUEST_FILENAME} -d [OR]
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# 2. Legacy SEO URL Mappings
+# Map the live site's routing paths to the physical PHP files here.
+RewriteRule ^about-us/?$ about.php [L,QSA]
+RewriteRule ^contact/?$ contact.php [L,QSA]
+RewriteRule ^gold-bailout-valuation/?$ gold-bailout.php [L,QSA]
+RewriteRule ^cash-on-diamond/?$ diamond.php [L,QSA]
+RewriteRule ^cash-on-silver/?$ silver.php [L,QSA]
+RewriteRule ^cash-on-gold/?$ gold.php [L,QSA]
+RewriteRule ^gold-pe-cash-services/?$ services.php [L,QSA]
+RewriteRule ^today-gold-rate-in-ranchi/?$ today-gold-rate-in-ranchi.php [L,QSA]
+
+# 3. Optional Generic .php Extension Hider
+# If someone requests /services and services.php exists, route them there.
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^(.*)$ $1.php [L]
