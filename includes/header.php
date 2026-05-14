@@ -63,7 +63,7 @@ if (isset($seoKey)) {
     <meta property="og:site_name" content="Gold Pe Cash">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="assets/img/favicon.png">
+    <link rel="icon" type="image/webp" href="assets/images/Logo.webp">
 
     <!-- CSS -->
     <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
