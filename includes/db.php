@@ -2,9 +2,9 @@
 // includes/db.php
 
 $host = 'localhost';
-$dbname = 'goldpecash_new';
-$username = 'root';
-$password = '';
+$dbname = 'u769307048_gpc';
+$username = 'u769307048_admingpc';
+$password = 'admin123';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
