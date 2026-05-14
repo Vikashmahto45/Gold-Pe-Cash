@@ -279,7 +279,9 @@ $S = getAllSettings();
                         if ($addr): ?>
                             <div class="branch-item">
                                 <i class="fas fa-map-marker-alt"></i>
-                                <span><?php echo htmlspecialchars($addr); ?></span>
+                                <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($addr); ?>" target="_blank" rel="noopener" style="color:inherit; text-decoration:none; transition: color 0.3s;" onmouseover="this.style.color='#c8a84b'" onmouseout="this.style.color='inherit'">
+                                    <span><?php echo htmlspecialchars($addr); ?></span>
+                                </a>
                             </div>
                         <?php endif; endfor; ?>
                 </div>

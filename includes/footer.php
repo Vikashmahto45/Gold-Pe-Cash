@@ -54,8 +54,10 @@
                     <?php $addr = s($S, "address$i", '');
                     if ($addr): ?>
                         <p style="font-size: 0.8rem; margin-bottom: 5px;">
-                            <i class="fas fa-map-marker-alt" style="color:var(--gold); margin-right:4px;"></i>
-                            <?php echo htmlspecialchars($addr); ?>
+                            <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($addr); ?>" target="_blank" rel="noopener" style="color:inherit; text-decoration:none;">
+                                <i class="fas fa-map-marker-alt" style="color:var(--gold); margin-right:4px;"></i>
+                                <span class="hover-text"><?php echo htmlspecialchars($addr); ?></span>
+                            </a>
                         </p>
                     <?php endif; endfor; ?>
             </div>
