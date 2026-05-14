@@ -2,9 +2,9 @@
 // includes/db.php
 
 $host = 'localhost';
-$dbname = 'u769307048_gpc';
-$username = 'u769307048_admingpc';
-$password = 'admin123';
+$dbname = 'u769307048_globalwebify18';
+$username = 'u769307048_globalwebify18';
+$password = 'Admin@12312332';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
