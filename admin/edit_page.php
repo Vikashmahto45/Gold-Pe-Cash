@@ -207,7 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 const q = new Quill('#editor-' + id, {
                     theme: 'snow',
                     modules: { toolbar: [
-                        [{ 'header': [1, 2, 3, false] }],
+                        [{ 'header': 1 }, { 'header': 2 }],
                         ['bold', 'italic', 'link'], 
                         [{ 'list': 'ordered'}, { 'list': 'bullet' }], 
                         ['clean']
