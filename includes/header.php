@@ -68,6 +68,46 @@ if (isset($seoKey)) {
     <!-- CSS -->
     <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Schema Markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Gold Pe Cash",
+      "url": "https://goldpecash.com/",
+      "logo": "https://goldpecash.com/assets/images/Logo.webp",
+      "sameAs": [
+        "https://facebook.com/goldpecash",
+        "https://instagram.com/goldpecash",
+        "https://youtube.com/@goldpecash"
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://goldpecash.com/"
+      },
+      "headline": "Gold Pe Cash — Instant Cash for Gold in Ranchi, Gold Sale Rate in Ranchi, Gold Buyer in Ranchi",
+      "image": "https://goldpecash.com/assets/images/Logo.webp",  
+      "author": {
+        "@type": "Organization",
+        "name": "Gold Pe Cash"
+      },  
+      "publisher": {
+        "@type": "Organization",
+        "name": "Gold Pe Cash",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://goldpecash.com/assets/images/Logo.webp"
+        }
+      },
+      "datePublished": "2024-01-01"
+    }
+    </script>
 </head>
 
 <body>
