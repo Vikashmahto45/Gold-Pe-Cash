@@ -103,9 +103,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             transition: border 0.3s;
         }
 
-        .form-group input:focus {
-            outline: none;
-            border-color: #4b0000;
+        .password-container {
+            position: relative;
+        }
+
+        .password-container input {
+            padding-right: 45px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #888;
+            transition: color 0.3s;
+        }
+
+        .toggle-password:hover {
+            color: #4b0000;
         }
 
         .btn-login {
@@ -171,7 +188,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="form-group">
                 <label>Password</label>
-                <input type="password" name="password" placeholder="Enter password" required>
+                <div class="password-container">
+                    <input type="password" name="password" id="password" placeholder="Enter password" required>
+                    <i class="fas fa-eye toggle-password" id="togglePassword"></i>
+                </div>
             </div>
             <button type="submit" class="btn-login">Login</button>
         </form>
@@ -180,6 +200,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a href="../index.php">← Back to Website</a>
         </div>
     </div>
+    <script>
+        const togglePassword = document.querySelector('#togglePassword');
+        const password = document.querySelector('#password');
+
+        togglePassword.addEventListener('click', function (e) {
+            // toggle the type attribute
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            // toggle the eye slash icon
+            this.classList.toggle('fa-eye-slash');
+        });
+    </script>
 </body>
 
 </html>

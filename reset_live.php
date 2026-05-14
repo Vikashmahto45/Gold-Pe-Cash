@@ -1,9 +1,14 @@
 <?php
 include 'includes/db.php';
 
-if (!$pdo) {
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
     echo "<h1>❌ Connection Failed</h1>";
-    echo "<p>Please check your credentials in <b>includes/db.php</b>. The script could not connect to your database.</p>";
+    echo "<p><b>Error Message:</b> " . $e->getMessage() . "</p>";
+    echo "<p>Please check your credentials in <b>includes/db.php</b>.</p>";
     exit;
 }
 
