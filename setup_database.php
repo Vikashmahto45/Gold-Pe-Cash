@@ -59,11 +59,11 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS contact_submissions (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 echo "<p>✅ Table 'contact_submissions' created.</p>";
 
-// Seed default admin user (password: admin123)
-$hash = password_hash('admin123', PASSWORD_DEFAULT);
+// Seed default admin user (password: admin@789)
+$hash = password_hash('admin@789', PASSWORD_DEFAULT);
 $stmt = $pdo->prepare("INSERT IGNORE INTO admin_users (username, password) VALUES (?, ?)");
 $stmt->execute(['admin', $hash]);
-echo "<p>✅ Admin user: <b>admin</b> / <b>admin123</b></p>";
+echo "<p>✅ Admin user: <b>admin</b> / <b>admin@789</b></p>";
 
 // Seed all settings
 $settings = [
