@@ -5,15 +5,7 @@
 include 'includes/db.php';
 
 if (!$pdo) {
-    try {
-        $pdo_temp = new PDO("mysql:host=localhost;charset=utf8mb4", 'root', '');
-        $pdo_temp->exec("CREATE DATABASE IF NOT EXISTS goldpecash CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-        $pdo = new PDO("mysql:host=localhost;dbname=goldpecash;charset=utf8mb4", 'root', '');
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        echo "<p>✅ Database 'goldpecash' created.</p>";
-    } catch (PDOException $e) {
-        die("❌ Cannot create database: " . $e->getMessage());
-    }
+    die("❌ Connection failed. Please check your credentials in <b>includes/db.php</b> before running this setup script.");
 }
 
 // Create or update settings table
