@@ -776,6 +776,7 @@ function fl($key)
                             ['🥇 Cash on Gold', '../gold.php', 'gold'],
                             ['🥈 Cash on Silver', '../silver.php', 'silver'],
                             ['💎 Cash on Diamond', '../demo.php', 'diamond'],
+                            ['📉 Today Gold Rate', '../today-gold-rate-in-ranchi.php', 'gold_rate_ranchi'],
                             ['🔓 Gold Bailout', '../gold-bailout.php', 'bailout'],
                             ['📞 Contact', '../contact.php', 'contact'],
                         ];

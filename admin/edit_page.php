@@ -1,5 +1,5 @@
 <?php
-// admin/edit_page.php — Create or Edit Dynamic Pages
+// admin/edit_page.php — Visual Block-Based Page Editor
 session_start();
 if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
     header('Location: index.php');
@@ -19,21 +19,50 @@ if ($id) {
     $page = $stmt->fetch();
 }
 
+// Helper to parse blocks from HTML (very basic)
+function parseBlocks($html) {
+    // In a real system, we'd store JSON, but for now we'll just store HTML 
+    // and provide a simple way to append new blocks.
+    // However, to make it "simple" for the user, we should probably store JSON 
+    // and render HTML on the fly.
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = $_POST['title'] ?? '';
     $slug = $_POST['slug'] ?? '';
-    $content = $_POST['content'] ?? '';
     $meta_title = $_POST['meta_title'] ?? '';
     $meta_desc = $_POST['meta_desc'] ?? '';
     $meta_keywords = $_POST['meta_keywords'] ?? '';
     $status = $_POST['status'] ?? 'published';
     $featured_image = $_POST['existing_image'] ?? '';
 
-    // Handle Image Upload
+    // Convert Blocks to HTML
+    $html_content = '';
+    if (isset($_POST['blocks'])) {
+        foreach ($_POST['blocks'] as $block) {
+            $type = $block['type'];
+            if ($type === 'heading') {
+                $html_content .= "\n<h2>" . htmlspecialchars($block['val']) . "</h2>\n";
+            } elseif ($type === 'text') {
+                $html_content .= "\n<p>" . nl2br(htmlspecialchars($block['val'])) . "</p>\n";
+            } elseif ($type === 'cta') {
+                $html_content .= "\n<div style='text-align:center; margin:40px 0;'><a href='".htmlspecialchars($block['link'])."' class='btn-gold' style='padding:15px 40px; border-radius:50px; text-decoration:none; display:inline-block; font-weight:700;'>".htmlspecialchars($block['text'])."</a></div>\n";
+            } elseif ($type === 'image_text') {
+                $dir = ($block['pos'] === 'right') ? 'row-reverse' : 'row';
+                $html_content .= "\n<div style='display:flex; gap:30px; align-items:center; margin:30px 0; flex-wrap:wrap; flex-direction:$dir;'>\n";
+                $html_content .= "  <div style='flex:1; min-width:300px;'><img src='".htmlspecialchars($block['img'])."' style='width:100%; border-radius:15px;'></div>\n";
+                $html_content .= "  <div style='flex:1; min-width:300px;'><h3>".htmlspecialchars($block['title'])."</h3><p>".nl2br(htmlspecialchars($block['text']))."</p></div>\n";
+                $html_content .= "</div>\n";
+            }
+        }
+    } else {
+        // Fallback to manual content if blocks not used
+        $html_content = $_POST['content'] ?? '';
+    }
+
     if (isset($_FILES['featured_image']) && $_FILES['featured_image']['error'] === UPLOAD_ERR_OK) {
         $upload_dir = '../assets/images/';
         if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
-        
         $filename = time() . '_' . $_FILES['featured_image']['name'];
         if (move_uploaded_file($_FILES['featured_image']['tmp_name'], $upload_dir . $filename)) {
             $featured_image = 'assets/images/' . $filename;
@@ -41,172 +70,157 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($id) {
-        // Update
         try {
             $stmt = $pdo->prepare("UPDATE dynamic_pages SET title=?, slug=?, content=?, meta_title=?, meta_desc=?, meta_keywords=?, featured_image=?, status=? WHERE id=?");
-            $stmt->execute([$title, $slug, $content, $meta_title, $meta_desc, $meta_keywords, $featured_image, $status, $id]);
+            $stmt->execute([$title, $slug, $html_content, $meta_title, $meta_desc, $meta_keywords, $featured_image, $status, $id]);
             $success = "Page updated successfully!";
-        } catch (PDOException $e) {
-            $error = "Error updating: " . $e->getMessage();
-        }
+        } catch (PDOException $e) { $error = "Error: " . $e->getMessage(); }
     } else {
-        // Create
         try {
             $stmt = $pdo->prepare("INSERT INTO dynamic_pages (title, slug, content, meta_title, meta_desc, meta_keywords, featured_image, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$title, $slug, $content, $meta_title, $meta_desc, $meta_keywords, $featured_image, $status]);
+            $stmt->execute([$title, $slug, $html_content, $meta_title, $meta_desc, $meta_keywords, $featured_image, $status]);
             $id = $pdo->lastInsertId();
-            $success = "Page created successfully!";
-            header("Location: edit_page.php?id=$id&success=" . urlencode($success));
-            exit;
-        } catch (PDOException $e) {
-            $error = "Error creating: " . $e->getMessage();
-        }
+            header("Location: edit_page.php?id=$id&success=Created"); exit;
+        } catch (PDOException $e) { $error = "Error: " . $e->getMessage(); }
     }
 }
-
-if (isset($_GET['success'])) $success = $_GET['success'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title><?= $id ? 'Edit' : 'Create' ?> Page — Admin Panel</title>
+    <title>Visual Editor — Gold Pe Cash</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #f4f6f9; color: #333; margin: 0; }
+        body { font-family: 'Outfit', sans-serif; background: #f0f2f5; margin: 0; color: #333; }
         .topbar { background: #4b0000; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
-        .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .form-group { margin-bottom: 20px; }
-        label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; color: #555; }
-        input[type="text"], textarea, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 1rem; }
-        textarea { height: 300px; }
-        .btn { padding: 12px 25px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: 0.3s; text-decoration: none; display: inline-block; }
-        .btn-primary { background: #4b0000; color: white; }
-        .btn-secondary { background: #eee; color: #333; }
-        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        .alert-success { background: #d1fae5; color: #065f46; }
-        .alert-error { background: #fee2e2; color: #991b1b; }
+        label { display: block; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; color: #888; margin-bottom: 8px; letter-spacing: 0.5px; }
+        input[type="text"], textarea, select { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 10px; font-family: inherit; font-size: 1rem; transition: 0.3s; }
+        input:focus, textarea:focus { border-color: #4b0000; outline: none; box-shadow: 0 0 0 3px rgba(75,0,0,0.1); }
         
-        .toolbar { background: #f8f9fa; padding: 10px; border: 1px solid #ddd; border-bottom: none; border-top-left-radius: 8px; border-top-right-radius: 8px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .tool-btn { background: white; border: 1px solid #ccc; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
-        .tool-btn:hover { background: #eee; }
+        .section-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 15px; position: relative; animation: fadeIn 0.3s; }
+        .section-box .remove-btn { position: absolute; top: 10px; right: 10px; color: #ff4d4d; cursor: pointer; font-size: 1.2rem; }
+        .section-type-badge { display: inline-block; padding: 3px 10px; background: #4b0000; color: white; border-radius: 20px; font-size: 0.7rem; font-weight: 700; margin-bottom: 15px; }
         
-        .flex-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .add-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 30px; }
+        .add-btn { background: white; border: 2px dashed #ddd; padding: 15px 20px; border-radius: 12px; cursor: pointer; flex: 1; min-width: 150px; text-align: center; transition: 0.3s; }
+        .add-btn:hover { border-color: #4b0000; color: #4b0000; background: #fff5f5; }
+        .add-btn i { display: block; font-size: 1.5rem; margin-bottom: 5px; }
+        
+        .btn-save { background: linear-gradient(135deg, #4b0000, #800000); color: white; border: none; padding: 15px 40px; border-radius: 10px; font-weight: 700; font-size: 1rem; cursor: pointer; width: 100%; box-shadow: 0 10px 20px rgba(75,0,0,0.2); }
+        .btn-save:hover { transform: translateY(-2px); box-shadow: 0 15px 25px rgba(75,0,0,0.3); }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
     <div class="topbar">
-        <div><i class="fas fa-edit"></i> <strong>Gold Pe Cash</strong> — CMS</div>
-        <a href="dashboard.php" style="color: white; text-decoration: none;"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+        <div><strong>Gold Pe Cash</strong> — Simple Page Builder</div>
+        <a href="dashboard.php" style="color:white; text-decoration:none;"><i class="fas fa-times"></i> Exit</a>
     </div>
 
     <div class="container">
-        <?php if ($success): ?><div class="alert alert-success"><?= $success ?></div><?php endif; ?>
-        <?php if ($error): ?><div class="alert alert-error"><?= $error ?></div><?php endif; ?>
-
         <form method="POST" enctype="multipart/form-data">
             <div class="card">
-                <h2 style="margin-top:0;"><?= $id ? 'Edit Page' : 'Create New Page' ?></h2>
-                
-                <div class="flex-row">
-                    <div class="form-group">
-                        <label>Page Title</label>
-                        <input type="text" name="title" value="<?= htmlspecialchars($page['title'] ?? '') ?>" placeholder="e.g. How to Sell Gold" required id="titleInput">
-                    </div>
-                    <div class="form-group">
-                        <label>URL Slug</label>
-                        <input type="text" name="slug" value="<?= htmlspecialchars($page['slug'] ?? '') ?>" placeholder="e.g. how-to-sell-gold" required id="slugInput">
-                    </div>
-                </div>
-
                 <div class="form-group">
-                    <label>Page Content (HTML Allowed)</label>
-                    <div class="toolbar">
-                        <strong>Insert Structure:</strong>
-                        <button type="button" class="tool-btn" onclick="insertContent('heading')">H2 Heading</button>
-                        <button type="button" class="tool-btn" onclick="insertContent('para')">Paragraph</button>
-                        <button type="button" class="tool-btn" onclick="insertContent('box')">Highlight Box</button>
-                        <button type="button" class="tool-btn" onclick="insertContent('img_left')">Image Left + Text</button>
-                        <button type="button" class="tool-btn" onclick="insertContent('img_right')">Text + Image Right</button>
-                        <button type="button" class="tool-btn" onclick="insertContent('cta')">CTA Button</button>
-                    </div>
-                    <textarea name="content" id="contentArea" style="border-top-left-radius:0; border-top-right-radius:0;"><?= htmlspecialchars($page['content'] ?? '') ?></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Featured Image</label>
-                    <?php if ($page['featured_image'] ?? ''): ?>
-                        <div style="margin-bottom:10px;"><img src="../<?= $page['featured_image'] ?>" style="height:100px; border-radius:8px;"></div>
-                        <input type="hidden" name="existing_image" value="<?= $page['featured_image'] ?>">
-                    <?php endif; ?>
-                    <input type="file" name="featured_image" accept="image/*">
-                </div>
-
-                <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-                <h3>SEO Settings</h3>
-                <div class="form-group">
-                    <label>Meta Title</label>
-                    <input type="text" name="meta_title" value="<?= htmlspecialchars($page['meta_title'] ?? '') ?>">
+                    <label>Page Title</label>
+                    <input type="text" name="title" value="<?= htmlspecialchars($page['title'] ?? '') ?>" placeholder="e.g. Sell Gold in 3 Easy Steps" required id="titleIn">
                 </div>
                 <div class="form-group">
-                    <label>Meta Description</label>
-                    <textarea name="meta_desc" style="height:80px;"><?= htmlspecialchars($page['meta_desc'] ?? '') ?></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Keywords (Comma separated)</label>
-                    <input type="text" name="meta_keywords" value="<?= htmlspecialchars($page['meta_keywords'] ?? '') ?>">
-                </div>
-
-                <div class="form-group">
-                    <label>Status</label>
-                    <select name="status">
-                        <option value="published" <?= ($page['status'] ?? '') === 'published' ? 'selected' : '' ?>>Published</option>
-                        <option value="draft" <?= ($page['status'] ?? '') === 'draft' ? 'selected' : '' ?>>Draft</option>
-                    </select>
-                </div>
-
-                <div style="margin-top:30px;">
-                    <button type="submit" class="btn btn-primary">Save Page</button>
-                    <a href="dashboard.php" class="btn btn-secondary">Cancel</a>
+                    <label>URL Address (Slug)</label>
+                    <input type="text" name="slug" value="<?= htmlspecialchars($page['slug'] ?? '') ?>" placeholder="e.g. sell-gold-steps" required id="slugIn">
                 </div>
             </div>
+
+            <h3 style="margin: 30px 0 15px; color: #4b0000;">Page Content Sections</h3>
+            <p style="color:#888; font-size:0.9rem; margin-bottom:20px;">Click the buttons below to add sections to your page. No code needed!</p>
+            
+            <div id="blocks-container">
+                <!-- Blocks will appear here -->
+            </div>
+
+            <div class="add-btns">
+                <div class="add-btn" onclick="addBlock('heading')"><i class="fas fa-heading"></i> Add Heading</div>
+                <div class="add-btn" onclick="addBlock('text')"><i class="fas fa-align-left"></i> Add Text</div>
+                <div class="add-btn" onclick="addBlock('image_text')"><i class="fas fa-th-large"></i> Image + Text</div>
+                <div class="add-btn" onclick="addBlock('cta')"><i class="fas fa-mouse-pointer"></i> Add Button</div>
+            </div>
+
+            <div class="card">
+                <h3>SEO & Image</h3>
+                <div class="form-group">
+                    <label>Featured Image</label>
+                    <input type="file" name="featured_image">
+                </div>
+                <div class="form-group">
+                    <label>Meta Description (for Google)</label>
+                    <textarea name="meta_desc" style="height:80px;"><?= htmlspecialchars($page['meta_desc'] ?? '') ?></textarea>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-save"><i class="fas fa-save"></i> Save Page</button>
         </form>
     </div>
 
     <script>
-        // Auto-slug generation
-        const titleInput = document.getElementById('titleInput');
-        const slugInput = document.getElementById('slugInput');
-        
-        if (!<?= $id ? 'true' : 'false' ?>) {
-            titleInput.addEventListener('input', () => {
-                slugInput.value = titleInput.value
-                    .toLowerCase()
-                    .replace(/[^\w\s-]/g, '')
-                    .replace(/[\s_-]+/g, '-')
-                    .replace(/^-+|-+$/g, '');
-            });
-        }
+        let blockCount = 0;
+        const container = document.getElementById('blocks-container');
 
-        const editor = document.getElementById('contentArea');
-        function insertContent(type) {
-            let snippet = '';
-            switch(type) {
-                case 'heading': snippet = '\n<h2>Enter Heading Here</h2>\n'; break;
-                case 'para': snippet = '\n<p>Enter your paragraph text here. You can add long content to explain your topic.</p>\n'; break;
-                case 'box': snippet = '\n<div class="highlight-box">\n  <strong>Important Note:</strong> Enter some key takeaway or highlighted information here.\n</div>\n'; break;
-                case 'img_left': snippet = '\n<div style="display:flex; gap:30px; align-items:center; margin:30px 0; flex-wrap:wrap;">\n  <div style="flex:1; min-width:300px;"><img src="assets/images/Logo.webp" style="width:100%; border-radius:15px;"></div>\n  <div style="flex:1; min-width:300px;">\n    <h3>Section Heading</h3>\n    <p>Enter text that appears next to the image here.</p>\n  </div>\n</div>\n'; break;
-                case 'img_right': snippet = '\n<div style="display:flex; gap:30px; align-items:center; margin:30px 0; flex-wrap:wrap; flex-direction:row-reverse;">\n  <div style="flex:1; min-width:300px;"><img src="assets/images/Logo.webp" style="width:100%; border-radius:15px;"></div>\n  <div style="flex:1; min-width:300px;">\n    <h3>Section Heading</h3>\n    <p>Enter text that appears next to the image here.</p>\n  </div>\n</div>\n'; break;
-                case 'cta': snippet = '\n<div style="text-align:center; margin:40px 0;">\n  <a href="contact-us" class="btn-gold" style="padding:15px 40px; border-radius:50px; text-decoration:none; display:inline-block; font-weight:700;">Get Cash Now</a>\n</div>\n'; break;
+        function addBlock(type, data = {}) {
+            const id = blockCount++;
+            const div = document.createElement('div');
+            div.className = 'section-box';
+            div.id = 'block-' + id;
+            
+            let html = `<i class="fas fa-trash remove-btn" onclick="this.parentElement.remove()"></i>`;
+            html += `<input type="hidden" name="blocks[${id}][type]" value="${type}">`;
+            
+            if (type === 'heading') {
+                html += `<span class="section-type-badge">HEADING</span>`;
+                html += `<input type="text" name="blocks[${id}][val]" placeholder="Enter Heading Text Here..." value="${data.val || ''}">`;
+            } else if (type === 'text') {
+                html += `<span class="section-type-badge">PARAGRAPH</span>`;
+                html += `<textarea name="blocks[${id}][val]" placeholder="Enter long text or paragraphs here...">${data.val || ''}</textarea>`;
+            } else if (type === 'cta') {
+                html += `<span class="section-type-badge">BUTTON</span>`;
+                html += `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                            <input type="text" name="blocks[${id}][text]" placeholder="Button Text (e.g. Call Us)" value="${data.text || ''}">
+                            <input type="text" name="blocks[${id}][link]" placeholder="Link (e.g. contact-us)" value="${data.link || ''}">
+                         </div>`;
+            } else if (type === 'image_text') {
+                html += `<span class="section-type-badge">IMAGE + TEXT</span>`;
+                html += `<input type="text" name="blocks[${id}][img]" placeholder="Image URL (e.g. assets/images/Logo.webp)" value="${data.img || 'assets/images/Logo.webp'}">
+                         <input type="text" name="blocks[${id}][title]" placeholder="Heading" style="margin:10px 0;" value="${data.title || ''}">
+                         <textarea name="blocks[${id}][text]" placeholder="Content text...">${data.text || ''}</textarea>
+                         <select name="blocks[${id}][pos]" style="margin-top:10px;">
+                            <option value="left">Image on Left</option>
+                            <option value="right">Image on Right</option>
+                         </select>`;
             }
             
-            const start = editor.selectionStart;
-            const end = editor.selectionEnd;
-            editor.value = editor.value.substring(0, start) + snippet + editor.value.substring(end);
-            editor.focus();
+            div.innerHTML = html;
+            container.appendChild(div);
         }
+
+        // Auto Slug
+        const titleIn = document.getElementById('titleIn');
+        const slugIn = document.getElementById('slugIn');
+        titleIn.addEventListener('input', () => {
+            if (slugIn.value === '' || slugIn.dataset.auto === 'true') {
+                slugIn.value = titleIn.value.toLowerCase().replace(/[^\w ]+/g,'').replace(/ +/g,'-');
+                slugIn.dataset.auto = 'true';
+            }
+        });
+
+        // Initialize with one heading if new
+        <?php if (!$id): ?>
+            addBlock('heading', {val: 'Welcome to My New Page'});
+            addBlock('text', {val: 'Start typing your content here...'});
+        <?php endif; ?>
     </script>
 </body>
 </html>
