@@ -45,6 +45,8 @@ function getSettingGroup($key)
         return 'faq';
     if (preg_match('/^trusted/', $key))
         return 'trusted';
+    if (preg_match('/^gold_rate_page/', $key))
+        return 'gold_rate_page';
     return 'general';
 }
 
@@ -133,6 +135,8 @@ $tabs = [
     'footer' => ['icon' => '📄', 'label' => 'Footer'],
     'about' => ['icon' => '📖', 'label' => 'About Page'],
     'faq' => ['icon' => '❓', 'label' => 'FAQ Section'],
+    'gold_rate_page' => ['icon' => '📉', 'label' => 'Gold Rate Page Content'],
+    'dynamic_pages' => ['icon' => '📝', 'label' => 'Dynamic Pages / Blog'],
 ];
 
 // ── SEO field friendly labels ────────────────────────────────────
@@ -718,6 +722,11 @@ function fl($key)
             <button class="sidebar-btn" onclick="showPanel('edit-silver', this)">🥈 Cash on Silver</button>
             <button class="sidebar-btn" onclick="showPanel('edit-diamond', this)">💎 Cash on Diamond</button>
             <button class="sidebar-btn" onclick="showPanel('edit-bailout', this)">🔓 Gold Bailout</button>
+            <button class="sidebar-btn" onclick="showPanel('gold_rate_page', this)">📉 Gold Rate Page</button>
+
+            <div class="sidebar-sep"></div>
+            <p class="sidebar-heading">Content Management</p>
+            <button class="sidebar-btn" onclick="showPanel('dynamic_pages', this)">📝 Dynamic Pages (Blog)</button>
 
             <div class="sidebar-sep"></div>
             <p class="sidebar-heading">Homepage</p>
@@ -1398,6 +1407,7 @@ function fl($key)
                     'footer' => ['📄 Footer', 'The text shown in the footer.'],
                     'about' => ['📖 About Page', 'Content for the About Us page.'],
                     'faq' => ['❓ FAQ Section', 'The FAQ questions and answers on the About page.'],
+                    'gold_rate_page' => ['📉 Gold Rate Page Content', 'Text content and main heading for the Today Gold Rate page.'],
                 ];
                 foreach ($genericGroups as $grp => [$title, $subtitle]):
                     $items = $grouped[$grp] ?? [];
@@ -1437,6 +1447,55 @@ function fl($key)
                             <?= explode(' —', $title)[0] ?></button>
                     </div>
                 <?php endforeach; ?>
+
+                <!-- ── Dynamic Pages / Blog ─────────────────────────── -->
+                <div class="panel" id="panel-dynamic_pages">
+                    <div class="panel-title">📝 Dynamic Pages & Blog Management</div>
+                    <div class="panel-subtitle">Create and manage your own custom pages or blog posts.</div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <a href="edit_page.php" class="plc-btn plc-view" style="padding: 10px 20px; font-size: 0.9rem;">
+                            <i class="fas fa-plus"></i> Create New Page
+                        </a>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Slug</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $stmt = $pdo->query("SELECT * FROM dynamic_pages ORDER BY created_at DESC");
+                                $dynPages = $stmt->fetchAll();
+                                if (empty($dynPages)): ?>
+                                    <tr><td colspan="5" style="text-align:center; color:#aaa;">No dynamic pages created yet.</td></tr>
+                                <?php else:
+                                    foreach ($dynPages as $dp): ?>
+                                        <tr>
+                                            <td><strong><?= htmlspecialchars($dp['title']) ?></strong></td>
+                                            <td><code>/<?= htmlspecialchars($dp['slug']) ?></code></td>
+                                            <td><span class="badge" style="background: <?= $dp['status'] === 'published' ? '#d1fae5' : '#eee' ?>; color: <?= $dp['status'] === 'published' ? '#065f46' : '#666' ?>;"><?= strtoupper($dp['status']) ?></span></td>
+                                            <td style="font-size: 0.75rem;"><?= date('M d, Y', strtotime($dp['created_at'])) ?></td>
+                                            <td>
+                                                <div class="page-link-actions">
+                                                    <a href="edit_page.php?id=<?= $dp['id'] ?>" class="plc-btn plc-edit"><i class="fas fa-pen"></i> Edit</a>
+                                                    <a href="../page.php?slug=<?= $dp['slug'] ?>" target="_blank" class="plc-btn plc-view"><i class="fas fa-eye"></i> View</a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach;
+                                endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
             </form>
 

@@ -43,7 +43,15 @@ $target = $dbSlugMap[$slug] ?? $slugMap[$slug] ?? null;
 if ($target && file_exists($target)) {
     include $target;
 } else {
-    http_response_code(404);
-    include 'index.php';
+    // Check dynamic pages
+    $stmt = $pdo->prepare("SELECT id FROM dynamic_pages WHERE slug = ? AND status = 'published'");
+    $stmt->execute([$slug]);
+    if ($stmt->fetch()) {
+        $dynamic_slug = $slug;
+        include 'page.php';
+    } else {
+        http_response_code(404);
+        include 'index.php';
+    }
 }
 ?>
