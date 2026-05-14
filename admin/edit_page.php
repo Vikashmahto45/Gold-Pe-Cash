@@ -206,7 +206,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (type === 'text' || type === 'image_text') {
                 const q = new Quill('#editor-' + id, {
                     theme: 'snow',
-                    modules: { toolbar: [['bold', 'italic', 'link'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['clean']] }
+                    modules: { toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'link'], 
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }], 
+                        ['clean']
+                    ] }
                 });
                 quills[id] = q;
             }
