@@ -467,7 +467,7 @@ header.scrolled {
 
 .trust-highlight-card p {
     font-size: 0.82rem;
-    color: var(--text-muted);
+    color: var(--text-muted) !important;
     line-height: 1.6;
     margin: 0;
 }
