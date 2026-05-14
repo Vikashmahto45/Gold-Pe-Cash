@@ -1,5 +1,5 @@
 <?php
-// admin/edit_page.php — Visual Block-Based Page Editor
+// admin/edit_page.php — Visual Block-Based Page Editor with Quill.js support
 session_start();
 if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
     header('Location: index.php');
@@ -19,14 +19,6 @@ if ($id) {
     $page = $stmt->fetch();
 }
 
-// Helper to parse blocks from HTML (very basic)
-function parseBlocks($html) {
-    // In a real system, we'd store JSON, but for now we'll just store HTML 
-    // and provide a simple way to append new blocks.
-    // However, to make it "simple" for the user, we should probably store JSON 
-    // and render HTML on the fly.
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = $_POST['title'] ?? '';
     $slug = $_POST['slug'] ?? '';
@@ -44,20 +36,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($type === 'heading') {
                 $html_content .= "\n<h2>" . htmlspecialchars($block['val']) . "</h2>\n";
             } elseif ($type === 'text') {
-                $html_content .= "\n<p>" . nl2br(htmlspecialchars($block['val'])) . "</p>\n";
+                // Quill provides HTML, so we don't escape or nl2br
+                $html_content .= "\n<div class='text-block'>" . $block['val'] . "</div>\n";
             } elseif ($type === 'cta') {
                 $html_content .= "\n<div style='text-align:center; margin:40px 0;'><a href='".htmlspecialchars($block['link'])."' class='btn-gold' style='padding:15px 40px; border-radius:50px; text-decoration:none; display:inline-block; font-weight:700;'>".htmlspecialchars($block['text'])."</a></div>\n";
             } elseif ($type === 'image_text') {
                 $dir = ($block['pos'] === 'right') ? 'row-reverse' : 'row';
                 $html_content .= "\n<div style='display:flex; gap:30px; align-items:center; margin:30px 0; flex-wrap:wrap; flex-direction:$dir;'>\n";
                 $html_content .= "  <div style='flex:1; min-width:300px;'><img src='".htmlspecialchars($block['img'])."' style='width:100%; border-radius:15px;'></div>\n";
-                $html_content .= "  <div style='flex:1; min-width:300px;'><h3>".htmlspecialchars($block['title'])."</h3><p>".nl2br(htmlspecialchars($block['text']))."</p></div>\n";
+                $html_content .= "  <div style='flex:1; min-width:300px;'><h3>".htmlspecialchars($block['title'])."</h3><div class='text-block'>".$block['text']."</div></div>\n";
                 $html_content .= "</div>\n";
             }
         }
-    } else {
-        // Fallback to manual content if blocks not used
-        $html_content = $_POST['content'] ?? '';
     }
 
     if (isset($_FILES['featured_image']) && $_FILES['featured_image']['error'] === UPLOAD_ERR_OK) {
@@ -92,6 +82,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Visual Editor — Gold Pe Cash</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Quill.js CSS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <style>
         body { font-family: 'Outfit', sans-serif; background: #f0f2f5; margin: 0; color: #333; }
         .topbar { background: #4b0000; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
@@ -103,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         input:focus, textarea:focus { border-color: #4b0000; outline: none; box-shadow: 0 0 0 3px rgba(75,0,0,0.1); }
         
         .section-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 15px; position: relative; animation: fadeIn 0.3s; }
-        .section-box .remove-btn { position: absolute; top: 10px; right: 10px; color: #ff4d4d; cursor: pointer; font-size: 1.2rem; }
+        .section-box .remove-btn { position: absolute; top: 10px; right: 10px; color: #ff4d4d; cursor: pointer; font-size: 1.2rem; z-index: 10; }
         .section-type-badge { display: inline-block; padding: 3px 10px; background: #4b0000; color: white; border-radius: 20px; font-size: 0.7rem; font-weight: 700; margin-bottom: 15px; }
         
         .add-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 30px; }
@@ -112,7 +104,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .add-btn i { display: block; font-size: 1.5rem; margin-bottom: 5px; }
         
         .btn-save { background: linear-gradient(135deg, #4b0000, #800000); color: white; border: none; padding: 15px 40px; border-radius: 10px; font-weight: 700; font-size: 1rem; cursor: pointer; width: 100%; box-shadow: 0 10px 20px rgba(75,0,0,0.2); }
-        .btn-save:hover { transform: translateY(-2px); box-shadow: 0 15px 25px rgba(75,0,0,0.3); }
+        
+        /* Quill Editor Tweaks */
+        .ql-container { background: white; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; min-height: 150px; font-family: 'Outfit', sans-serif; font-size: 1rem; }
+        .ql-toolbar { background: #eee; border-top-left-radius: 10px; border-top-right-radius: 10px; border-color: #ddd !important; }
         
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -124,7 +119,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <div class="container">
-        <form method="POST" enctype="multipart/form-data">
+        <?php if ($success): ?><div style="background:#d1fae5; color:#065f46; padding:15px; border-radius:10px; margin-bottom:20px;"><?= $success ?></div><?php endif; ?>
+        <form method="POST" enctype="multipart/form-data" id="mainForm">
             <div class="card">
                 <div class="form-group">
                     <label>Page Title</label>
@@ -137,11 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <h3 style="margin: 30px 0 15px; color: #4b0000;">Page Content Sections</h3>
-            <p style="color:#888; font-size:0.9rem; margin-bottom:20px;">Click the buttons below to add sections to your page. No code needed!</p>
-            
-            <div id="blocks-container">
-                <!-- Blocks will appear here -->
-            </div>
+            <div id="blocks-container"></div>
 
             <div class="add-btns">
                 <div class="add-btn" onclick="addBlock('heading')"><i class="fas fa-heading"></i> Add Heading</div>
@@ -157,7 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="file" name="featured_image">
                 </div>
                 <div class="form-group">
-                    <label>Meta Description (for Google)</label>
+                    <label>Meta Description</label>
                     <textarea name="meta_desc" style="height:80px;"><?= htmlspecialchars($page['meta_desc'] ?? '') ?></textarea>
                 </div>
             </div>
@@ -166,9 +158,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     </div>
 
+    <!-- Quill.js JS -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
         let blockCount = 0;
         const container = document.getElementById('blocks-container');
+        const quills = {};
 
         function addBlock(type, data = {}) {
             const id = blockCount++;
@@ -184,29 +179,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 html += `<input type="text" name="blocks[${id}][val]" placeholder="Enter Heading Text Here..." value="${data.val || ''}">`;
             } else if (type === 'text') {
                 html += `<span class="section-type-badge">PARAGRAPH</span>`;
-                html += `<textarea name="blocks[${id}][val]" placeholder="Enter long text or paragraphs here...">${data.val || ''}</textarea>`;
+                html += `<input type="hidden" name="blocks[${id}][val]" id="input-${id}">`;
+                html += `<div id="editor-${id}" class="quill-editor">${data.val || ''}</div>`;
             } else if (type === 'cta') {
                 html += `<span class="section-type-badge">BUTTON</span>`;
                 html += `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                            <input type="text" name="blocks[${id}][text]" placeholder="Button Text (e.g. Call Us)" value="${data.text || ''}">
-                            <input type="text" name="blocks[${id}][link]" placeholder="Link (e.g. contact-us)" value="${data.link || ''}">
+                            <input type="text" name="blocks[${id}][text]" placeholder="Button Text" value="${data.text || ''}">
+                            <input type="text" name="blocks[${id}][link]" placeholder="Link" value="${data.link || ''}">
                          </div>`;
             } else if (type === 'image_text') {
                 html += `<span class="section-type-badge">IMAGE + TEXT</span>`;
-                html += `<input type="text" name="blocks[${id}][img]" placeholder="Image URL (e.g. assets/images/Logo.webp)" value="${data.img || 'assets/images/Logo.webp'}">
+                html += `<input type="text" name="blocks[${id}][img]" placeholder="Image URL" value="${data.img || 'assets/images/Logo.webp'}">
                          <input type="text" name="blocks[${id}][title]" placeholder="Heading" style="margin:10px 0;" value="${data.title || ''}">
-                         <textarea name="blocks[${id}][text]" placeholder="Content text...">${data.text || ''}</textarea>
+                         <input type="hidden" name="blocks[${id}][text]" id="input-${id}">
+                         <div id="editor-${id}" class="quill-editor">${data.text || ''}</div>
                          <select name="blocks[${id}][pos]" style="margin-top:10px;">
-                            <option value="left">Image on Left</option>
-                            <option value="right">Image on Right</option>
+                            <option value="left" ${data.pos==='left'?'selected':''}>Image on Left</option>
+                            <option value="right" ${data.pos==='right'?'selected':''}>Image on Right</option>
                          </select>`;
             }
             
             div.innerHTML = html;
             container.appendChild(div);
+
+            // Initialize Quill for text/image_text
+            if (type === 'text' || type === 'image_text') {
+                const q = new Quill('#editor-' + id, {
+                    theme: 'snow',
+                    modules: { toolbar: [['bold', 'italic', 'link'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['clean']] }
+                });
+                quills[id] = q;
+            }
         }
 
-        // Auto Slug
+        // Sync Quill content to hidden inputs before submit
+        document.getElementById('mainForm').onsubmit = function() {
+            for (let id in quills) {
+                const input = document.getElementById('input-' + id);
+                if (input) {
+                    input.value = quills[id].root.innerHTML;
+                }
+            }
+        };
+
+        // Auto Slug logic
         const titleIn = document.getElementById('titleIn');
         const slugIn = document.getElementById('slugIn');
         titleIn.addEventListener('input', () => {
@@ -216,10 +232,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
 
-        // Initialize with one heading if new
+        // Initialize with default blocks if new
         <?php if (!$id): ?>
             addBlock('heading', {val: 'Welcome to My New Page'});
-            addBlock('text', {val: 'Start typing your content here...'});
+            addBlock('text', {val: '<p>Start typing your content here... You can <strong>Bold</strong> text and add <a href="#">links</a> easily!</p>'});
         <?php endif; ?>
     </script>
 </body>
