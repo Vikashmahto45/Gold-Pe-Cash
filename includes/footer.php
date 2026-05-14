@@ -50,7 +50,7 @@
             </div>
             <div class="footer-col">
                 <h4 style="margin-top: 0;">Our Offices</h4>
-                <?php for ($i = 1; $i <= 6; $i++): ?>
+                <?php for ($i = 1; $i <= 7; $i++): ?>
                     <?php $addr = s($S, "address$i", '');
                     if ($addr): ?>
                         <p style="font-size: 0.8rem; margin-bottom: 5px;">

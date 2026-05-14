@@ -182,7 +182,7 @@ $S = getAllSettings();
                 </div>
                 <div class="branch-list">
                     <h4>Our Branches</h4>
-                    <?php for ($i = 1; $i <= 6; $i++): ?>
+                    <?php for ($i = 1; $i <= 7; $i++): ?>
                         <?php $addr = s($S, "address$i", '');
                         if ($addr): ?>
                             <div class="branch-item">

@@ -395,7 +395,7 @@ $S = getAllSettings();
                     </a>
                 </div>
                 <p class="branches-title"><i class="fas fa-store" style="margin-right:6px;"></i>Our Branches</p>
-                <?php for ($i = 1; $i <= 6; $i++): ?>
+                <?php for ($i = 1; $i <= 7; $i++): ?>
                     <?php $addr = s($S, "address$i", '');
                     if ($addr): ?>
                         <div class="branch-entry">

@@ -26,18 +26,36 @@ function getSetting($key)
 function getAllSettings()
 {
     global $pdo;
-    if (!$pdo)
-        return [];
-    try {
-        $stmt = $pdo->query("SELECT setting_key, setting_value FROM settings");
-        $settings = [];
-        while ($row = $stmt->fetch()) {
-            $settings[$row['setting_key']] = $row['setting_value'];
+    $settings = [];
+    if ($pdo) {
+        try {
+            $stmt = $pdo->query("SELECT setting_key, setting_value FROM settings");
+            while ($row = $stmt->fetch()) {
+                $settings[$row['setting_key']] = $row['setting_value'];
+            }
+        } catch (PDOException $e) {
+            // keep $settings empty
         }
-        return $settings;
-    } catch (PDOException $e) {
-        return [];
     }
+    
+    // Fallback/Default addresses
+    $defaultAddresses = [
+        'address1' => 'Kishor Ganj, Harmu Road, beside Premsons Honda Showroom, Ranchi, 834001',
+        'address2' => 'Opposite Health Point Hospital, Indraprastha Colony, Sarhul Nagar, Ranchi, Jharkhand – 834009',
+        'address3' => 'Ratu Road, Near Mall of Ranchi, Ranchi 834001',
+        'address4' => 'Piska More Chowk, Beside Gurdwara, Ranchi, Jharkhand 835102',
+        'address5' => 'Kanta toli Chowk, Beside BOI and SBI ATM, Ranchi, Jharkhand 834001',
+        'address6' => 'Ground floor, beside Lakshmi Narsing Home, Kilburn Colony, Shukla Colony, Ranchi, Jharkhand 834002',
+        'address7' => 'Ashok Nagar Rd, beside Ashok Vihar, near Canara bank, Ashok Kunj, Kadru, Ranchi, Jharkhand 834002'
+    ];
+    
+    foreach ($defaultAddresses as $k => $v) {
+        if (!isset($settings[$k]) || trim($settings[$k]) === '') {
+            $settings[$k] = $v;
+        }
+    }
+    
+    return $settings;
 }
 
 /**
