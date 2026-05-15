@@ -1,6 +1,6 @@
 <?php
-include 'includes/db.php';
-include 'includes/functions.php';
+include_once 'includes/db.php';
+include_once 'includes/functions.php';
 
 $slug = $_GET['slug'] ?? '';
 if (!$slug && isset($dynamic_slug)) {
