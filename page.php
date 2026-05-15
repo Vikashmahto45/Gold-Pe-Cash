@@ -78,7 +78,30 @@ $S = getAllSettings();
 
 <div class="page-content">
     <div class="container" style="max-width: 900px;">
-        <?php echo $page['content']; ?>
+        <?php 
+        $blocks = json_decode($page['content'], true);
+        if ($blocks && is_array($blocks)) {
+            foreach ($blocks as $block) {
+                $type = $block['type'];
+                if ($type === 'heading') {
+                    echo "<h2>" . htmlspecialchars($block['val']) . "</h2>";
+                } elseif ($type === 'text') {
+                    echo "<div class='text-block'>" . $block['val'] . "</div>";
+                } elseif ($type === 'cta') {
+                    echo "<div style='text-align:center; margin:40px 0;'><a href='".htmlspecialchars($block['link'])."' class='btn-gold' style='padding:15px 40px; border-radius:50px; text-decoration:none; display:inline-block; font-weight:700;'>".htmlspecialchars($block['text'])."</a></div>";
+                } elseif ($type === 'image_text') {
+                    $dir = ($block['pos'] === 'right') ? 'row-reverse' : 'row';
+                    echo "<div style='display:flex; gap:30px; align-items:center; margin:30px 0; flex-wrap:wrap; flex-direction:$dir;'>";
+                    echo "<div style='flex:1; min-width:300px;'><img src='".htmlspecialchars($block['img'])."' style='width:100%; border-radius:15px;'></div>";
+                    echo "<div style='flex:1; min-width:300px;'><h3>".htmlspecialchars($block['title'])."</h3><div class='text-block'>".$block['text']."</div></div>";
+                    echo "</div>";
+                }
+            }
+        } else {
+            // Fallback for old content
+            echo $page['content'];
+        }
+        ?>
     </div>
 </div>
 

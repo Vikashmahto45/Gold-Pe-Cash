@@ -28,26 +28,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = $_POST['status'] ?? 'published';
     $featured_image = $_POST['existing_image'] ?? '';
 
-    // Convert Blocks to HTML
-    $html_content = '';
+    // Convert Blocks to JSON instead of flat HTML to preserve structure
+    $blocks_json = '';
     if (isset($_POST['blocks'])) {
-        foreach ($_POST['blocks'] as $block) {
-            $type = $block['type'];
-            if ($type === 'heading') {
-                $html_content .= "\n<h2>" . htmlspecialchars($block['val']) . "</h2>\n";
-            } elseif ($type === 'text') {
-                // Quill provides HTML, so we don't escape or nl2br
-                $html_content .= "\n<div class='text-block'>" . $block['val'] . "</div>\n";
-            } elseif ($type === 'cta') {
-                $html_content .= "\n<div style='text-align:center; margin:40px 0;'><a href='".htmlspecialchars($block['link'])."' class='btn-gold' style='padding:15px 40px; border-radius:50px; text-decoration:none; display:inline-block; font-weight:700;'>".htmlspecialchars($block['text'])."</a></div>\n";
-            } elseif ($type === 'image_text') {
-                $dir = ($block['pos'] === 'right') ? 'row-reverse' : 'row';
-                $html_content .= "\n<div style='display:flex; gap:30px; align-items:center; margin:30px 0; flex-wrap:wrap; flex-direction:$dir;'>\n";
-                $html_content .= "  <div style='flex:1; min-width:300px;'><img src='".htmlspecialchars($block['img'])."' style='width:100%; border-radius:15px;'></div>\n";
-                $html_content .= "  <div style='flex:1; min-width:300px;'><h3>".htmlspecialchars($block['title'])."</h3><div class='text-block'>".$block['text']."</div></div>\n";
-                $html_content .= "</div>\n";
-            }
-        }
+        $blocks_json = json_encode($_POST['blocks']);
     }
 
     if (isset($_FILES['featured_image']) && $_FILES['featured_image']['error'] === UPLOAD_ERR_OK) {
@@ -62,13 +46,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($id) {
         try {
             $stmt = $pdo->prepare("UPDATE dynamic_pages SET title=?, slug=?, content=?, meta_title=?, meta_desc=?, meta_keywords=?, featured_image=?, status=? WHERE id=?");
-            $stmt->execute([$title, $slug, $html_content, $meta_title, $meta_desc, $meta_keywords, $featured_image, $status, $id]);
+            $stmt->execute([$title, $slug, $blocks_json, $meta_title, $meta_desc, $meta_keywords, $featured_image, $status, $id]);
             $success = "Page updated successfully!";
         } catch (PDOException $e) { $error = "Error: " . $e->getMessage(); }
     } else {
         try {
             $stmt = $pdo->prepare("INSERT INTO dynamic_pages (title, slug, content, meta_title, meta_desc, meta_keywords, featured_image, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$title, $slug, $html_content, $meta_title, $meta_desc, $meta_keywords, $featured_image, $status]);
+            $stmt->execute([$title, $slug, $blocks_json, $meta_title, $meta_desc, $meta_keywords, $featured_image, $status]);
             $id = $pdo->lastInsertId();
             header("Location: edit_page.php?id=$id&success=Created"); exit;
         } catch (PDOException $e) { $error = "Error: " . $e->getMessage(); }
@@ -209,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     modules: { toolbar: [
                         [{ 'header': 1 }, { 'header': 2 }],
                         ['bold', 'italic', 'link'], 
-                        [{ 'list': 'ordered'}, { 'list': 'bullet' }], 
+                        ['list', 'ordered'], ['bullet', 'list'],
                         ['clean']
                     ] }
                 });
@@ -237,8 +221,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
 
-        // Initialize with default blocks if new
-        <?php if (!$id): ?>
+        // Initialize with existing blocks or default blocks
+        <?php 
+        $existingContent = $page['content'] ?? '';
+        $existingBlocks = json_decode($existingContent, true);
+        
+        if ($existingBlocks && is_array($existingBlocks)): 
+            foreach ($existingBlocks as $b): ?>
+                addBlock('<?= $b['type'] ?>', <?= json_encode($b) ?>);
+            <?php endforeach; 
+        elseif (!$id): ?>
             addBlock('heading', {val: 'Welcome to My New Page'});
             addBlock('text', {val: '<p>Start typing your content here... You can <strong>Bold</strong> text and add <a href="#">links</a> easily!</p>'});
         <?php endif; ?>

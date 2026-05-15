@@ -149,6 +149,7 @@ $seoPages = [
     'diamond' => '💎 Cash on Diamond',
     'bailout' => '🔓 Gold Bailout',
     'contact' => '📞 Contact',
+    'gold_rate_ranchi' => '📉 Gold Rate Page',
 ];
 $seoFields = ['title' => 'Page Title', 'desc' => 'Meta Description', 'keywords' => 'Keywords'];
 
@@ -1487,7 +1488,7 @@ function fl($key)
                                             <td>
                                                 <div class="page-link-actions">
                                                     <a href="edit_page.php?id=<?= $dp['id'] ?>" class="plc-btn plc-edit"><i class="fas fa-pen"></i> Edit</a>
-                                                    <a href="../page.php?slug=<?= $dp['slug'] ?>" target="_blank" class="plc-btn plc-view"><i class="fas fa-eye"></i> View</a>
+                                                    <a href="../<?= htmlspecialchars($dp['slug']) ?>" target="_blank" class="plc-btn plc-view"><i class="fas fa-eye"></i> View</a>
                                                 </div>
                                             </td>
                                         </tr>
