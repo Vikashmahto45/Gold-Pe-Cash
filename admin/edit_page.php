@@ -191,9 +191,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 const q = new Quill('#editor-' + id, {
                     theme: 'snow',
                     modules: { toolbar: [
-                        [{ 'header': 1 }, { 'header': 2 }],
                         ['bold', 'italic', 'link'], 
-                        ['list', 'ordered'], ['bullet', 'list'],
+                        [{ 'header': 1 }, { 'header': 2 }],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }], 
                         ['clean']
                     ] }
                 });
@@ -226,13 +226,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $existingContent = $page['content'] ?? '';
         $existingBlocks = json_decode($existingContent, true);
         
+        // MIGRATION LOGIC: If content exists but isn't JSON, it's legacy HTML.
+        // Wrap it in a 'text' block so it doesn't get lost.
+        if (!$existingBlocks && !empty($existingContent)) {
+            $existingBlocks = [
+                ['type' => 'text', 'val' => $existingContent]
+            ];
+        }
+
         if ($existingBlocks && is_array($existingBlocks)): 
             foreach ($existingBlocks as $b): ?>
-                addBlock('<?= $b['type'] ?>', <?= json_encode($b) ?>);
+                addBlock('<?= $b['type'] ?>', <?= json_encode($b, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>);
             <?php endforeach; 
         elseif (!$id): ?>
             addBlock('heading', {val: 'Welcome to My New Page'});
-            addBlock('text', {val: '<p>Start typing your content here... You can <strong>Bold</strong> text and add <a href="#">links</a> easily!</p>'});
+            addBlock('text', {val: '<p>Start typing your content here...</p>'});
         <?php endif; ?>
     </script>
 </body>
