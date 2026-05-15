@@ -18,6 +18,10 @@ RewriteRule ^gold-pe-cash-services/?$ services.php [L,QSA]
 RewriteRule ^today-gold-rate-in-ranchi/?$ today-gold-rate-in-ranchi.php [L,QSA]
 
 # 3. Optional Generic .php Extension Hider
-# If someone requests /services and services.php exists, route them there.
 RewriteCond %{REQUEST_FILENAME}\.php -f
 RewriteRule ^(.*)$ $1.php [L]
+
+# 4. Catch-all for Dynamic Slugs (Blog, Custom Pages)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ route.php [L,QSA]

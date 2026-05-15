@@ -29,9 +29,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $featured_image = $_POST['existing_image'] ?? '';
 
     // Convert Blocks to JSON instead of flat HTML to preserve structure
-    $blocks_json = '';
     if (isset($_POST['blocks'])) {
-        $blocks_json = json_encode($_POST['blocks']);
+        $blocks = $_POST['blocks'];
+        
+        // Handle Block Image Uploads
+        if (isset($_FILES['block_images'])) {
+            foreach ($_FILES['block_images']['name'] as $id => $name) {
+                if ($_FILES['block_images']['error'][$id] === UPLOAD_ERR_OK) {
+                    $upload_dir = '../assets/images/';
+                    if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
+                    $filename = 'blk_' . time() . '_' . $name;
+                    if (move_uploaded_file($_FILES['block_images']['tmp_name'][$id], $upload_dir . $filename)) {
+                        $blocks[$id]['img'] = 'assets/images/' . $filename;
+                    }
+                }
+            }
+        }
+        $blocks_json = json_encode($blocks);
     }
 
     if (isset($_FILES['featured_image']) && $_FILES['featured_image']['error'] === UPLOAD_ERR_OK) {
@@ -173,7 +187,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                          </div>`;
             } else if (type === 'image_text') {
                 html += `<span class="section-type-badge">IMAGE + TEXT</span>`;
-                html += `<input type="text" name="blocks[${id}][img]" placeholder="Image URL" value="${data.img || 'assets/images/Logo.webp'}">
+                html += `<div style="margin-bottom:10px;">
+                            <label style="display:inline-block; margin-right:10px;">Upload Image:</label>
+                            <input type="file" name="block_images[${id}]" accept="image/*">
+                            <input type="hidden" name="blocks[${id}][img]" value="${data.img || 'assets/images/Logo.webp'}">
+                         </div>
                          <input type="text" name="blocks[${id}][title]" placeholder="Heading" style="margin:10px 0;" value="${data.title || ''}">
                          <input type="hidden" name="blocks[${id}][text]" id="input-${id}">
                          <div id="editor-${id}" class="quill-editor">${data.text || ''}</div>
