@@ -1489,6 +1489,7 @@ function fl($key)
                                                 <div class="page-link-actions">
                                                     <a href="edit_page.php?id=<?= $dp['id'] ?>" class="plc-btn plc-edit"><i class="fas fa-pen"></i> Edit</a>
                                                     <a href="../<?= htmlspecialchars($dp['slug']) ?>" target="_blank" class="plc-btn plc-view"><i class="fas fa-eye"></i> View</a>
+                                                    <a href="delete_page.php?id=<?= $dp['id'] ?>" class="plc-btn plc-edit" style="border-color:#ff4d4d; color:#ff4d4d; background:#fff5f5;" onclick="return confirm('Are you sure you want to delete this page? This cannot be undone.')"><i class="fas fa-trash"></i> Delete</a>
                                                 </div>
                                             </td>
                                         </tr>
